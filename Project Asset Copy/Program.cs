@@ -40,7 +40,10 @@ namespace Project_Asset_Copy
 
             if (!Directory.Exists(outputPath)) Directory.CreateDirectory(outputPath);
 
-
+            if (fileExists)
+            {
+                File.Copy(args[0], args[1]);
+            }
 
             return 0;
         }
