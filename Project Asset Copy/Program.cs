@@ -42,9 +42,31 @@ namespace Project_Asset_Copy
 
             if (fileExists)
             {
-                File.Copy(args[0], args[1]);
+                if (File.Exists(args[1]))
+                {
+                    if (!CompareFileMD5(args[0], args[1]))
+                    {
+                        File.Copy(args[0], args[1], true);
+                        Console.WriteLine($"Updated file {args[1]}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No changes made to file {args[1]}");
+                    }
+                } else
+                {
+                    File.Copy(args[0], args[1]);
+                    Console.WriteLine($"Copied file {args[1]}");
+                }
+            }
+            else if (directoryExists)
+            {
+
             }
 
+#if DEBUG
+            Console.ReadKey();
+#endif
             return 0;
         }
 
