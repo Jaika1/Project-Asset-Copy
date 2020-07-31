@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Project_Asset_Copy
 {
@@ -25,6 +22,14 @@ namespace Project_Asset_Copy
                 Console.ForegroundColor = foreCol;
                 return 1;
             }
+            if (args.Count(x=>string.IsNullOrWhiteSpace(x)) > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine($"Input parameters cannot be blank.");
+                Console.ForegroundColor = foreCol;
+                return 1;
+            }
+
             bool fileExists = File.Exists(args[0]);
             bool directoryExists = Directory.Exists(args[0]);
 
@@ -36,32 +41,34 @@ namespace Project_Asset_Copy
                 return 1;
             }
 
-            string outputPath = Path.GetDirectoryName(args[1]);
+            string outputPath = directoryExists ? args[1] : Path.GetDirectoryName(args[1]);
 
-            if (!Directory.Exists(outputPath)) Directory.CreateDirectory(outputPath);
+            if (!string.IsNullOrWhiteSpace(outputPath) && !Directory.Exists(outputPath)) {
+                Directory.CreateDirectory(outputPath);
+                Console.WriteLine($"Made directory {outputPath}");
+            }
 
             if (fileExists)
             {
-                if (File.Exists(args[1]))
-                {
-                    if (!CompareFileMD5(args[0], args[1]))
-                    {
-                        File.Copy(args[0], args[1], true);
-                        Console.WriteLine($"Updated file {args[1]}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"No changes made to file {args[1]}");
-                    }
-                } else
-                {
-                    File.Copy(args[0], args[1]);
-                    Console.WriteLine($"Copied file {args[1]}");
-                }
+                CopyFile(args[0], args[1]);
             }
             else if (directoryExists)
             {
+                foreach (string dirTree in Directory.EnumerateDirectories(args[0], "*", SearchOption.AllDirectories))
+                {
+                    string dest = dirTree.Replace(args[0], args[1]);
+                    if (!Directory.Exists(dest))
+                    {
+                        Directory.CreateDirectory(dest);
+                        Console.WriteLine($"Made directory {dest}");
+                    }
+                }
 
+                foreach(string file in Directory.EnumerateFiles(args[0], "*.*", SearchOption.AllDirectories))
+                {
+                    string dest = file.Replace(args[0], args[1]);
+                    CopyFile(file, dest);
+                }
             }
 
 #if DEBUG
@@ -88,6 +95,27 @@ namespace Project_Asset_Copy
             BigInteger file2hash = new BigInteger(file2hashdata);
 
             return file1hash == file2hash;
+        }
+
+        static void CopyFile(string f1l, string f2l)
+        {
+            if (File.Exists(f2l))
+            {
+                if (!CompareFileMD5(f1l, f2l))
+                {
+                    File.Copy(f1l, f2l, true);
+                    Console.WriteLine($"Updated file {f2l}");
+                }
+                else
+                {
+                    Console.WriteLine($"No changes made to file {f2l}");
+                }
+            }
+            else
+            {
+                File.Copy(f1l, f2l);
+                Console.WriteLine($"Copied file {f2l}");
+            }
         }
     }
 }
